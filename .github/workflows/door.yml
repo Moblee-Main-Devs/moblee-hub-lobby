@@ -1,0 +1,35 @@
+name: door
+on:
+  issues:
+    types: [opened, labeled]
+permissions:
+  issues: write
+jobs:
+  invite:
+    runs-on: ubuntu-latest
+    # approve: run only when the keeper has added the label. open: delete the next line.
+    if: github.event.action == 'labeled' && github.event.label.name == 'approved'
+    steps:
+      - name: read the request
+        id: req
+        env:
+          # The title is passed as data, never pasted into the script, so a title cannot run commands.
+          TITLE: ${{ github.event.issue.title }}
+        run: |
+          user=$(printf '%s' "$TITLE" | sed -n 's/^join: *\([A-Za-z0-9-]*\).*/\1/p')
+          if [ -z "$user" ]; then echo "not a join request"; exit 0; fi
+          echo "user=$user" >> "$GITHUB_OUTPUT"
+      - name: invite to the hub
+        if: steps.req.outputs.user != ''
+        env:
+          GH_TOKEN: ${{ secrets.HUB_TOKEN }}
+          HUB_USER: ${{ steps.req.outputs.user }}
+        run: gh api -X PUT "repos/mmamas40501/moblee-hub/collaborators/$HUB_USER" -f permission=push
+      - name: say so and close
+        if: steps.req.outputs.user != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+        run: |
+          gh issue comment "$ISSUE" --repo "$GITHUB_REPOSITORY" --body "Invited. Your assistant accepts the invitation and brings the Hub in."
+          gh issue close "$ISSUE" --repo "$GITHUB_REPOSITORY"
