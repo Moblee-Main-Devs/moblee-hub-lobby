@@ -24,7 +24,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.HUB_TOKEN }}
           HUB_USER: ${{ steps.req.outputs.user }}
-        run: gh api -X PUT "repos/mmamas40501/moblee-hub/collaborators/$HUB_USER" -f permission=push
+        run: gh api -X PUT "repos/Moblee-Main-Devs/moblee-hub/collaborators/$HUB_USER" -f permission=push
       - name: say so and close
         if: steps.req.outputs.user != ''
         env:
